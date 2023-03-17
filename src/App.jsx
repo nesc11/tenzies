@@ -1,35 +1,81 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react'
+import Die from './Die'
+import { nanoid } from 'nanoid'
 
-function App() {
-  const [count, setCount] = useState(0)
+
+export default function App() {
+
+  const getNewDie = () => {
+    return {
+      value: Math.ceil(Math.random() * 6),
+      isHeld: false,
+      id: nanoid()
+    }
+  }
+
+  const getNewDice = () => {
+    const diceRandomNumbers = []
+    for (let i = 0; i < 10; i++) {
+      diceRandomNumbers.push(getNewDie())
+    }
+    return diceRandomNumbers
+  }
+
+  const [dice, setDice] = React.useState(getNewDice())
+  const [tenzies, setTenzies] = React.useState(false)
+
+
+  const diceElements = dice.map(die => <Die key={die.id} holdDie={() => holdDie(die.id)} number={die.value} isHeld={die.isHeld} />)
+
+  // React.useEffect(() => {
+
+  // }, [])
+
+  const roll = () => {
+
+    if (tenzies === false) {
+      setDice(oldDice => {
+        return oldDice.map(die => {
+          return die.isHeld ? die : getNewDie()
+        })
+      })
+    } else {
+      setDice(getNewDice())
+      setTenzies(prevTenzies => !prevTenzies)
+    }
+
+  }
+
+  const holdDie = (id) => {
+    setDice(oldDice => {
+      return oldDice.map(die => {
+        return die.id === id ? { ...die, isHeld: !die.isHeld } : die
+      })
+    })
+  }
+
+  const checkTenzies = () => {
+    return dice.every(die => die.isHeld)
+  }
+
+  React.useEffect(() => {
+    if (checkTenzies()) {
+      setTenzies(prevTenzies => !prevTenzies)
+    }
+  }, [dice])
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
+    <React.Fragment>
+      <header className='header'>
+        <h1>Tenzies</h1>
+      </header>
+      <main className='main'>
+        <p>Roll until all dice are the same. Click each die to freeze it at its current value between rolls.</p>
+        <div className="dice-container">
+          {diceElements}
+        </div>
+        <button onClick={roll}>{tenzies ? "New Game" : "Roll"}</button>
+      </main>
+    </React.Fragment>
   )
 }
-
-export default App
